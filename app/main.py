@@ -1,5 +1,4 @@
 # Health endpoint toggle
-ENABLE_HEALTH_ENDPOINT = os.getenv("ENABLE_HEALTH_ENDPOINT", "true").lower() == "true"
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,6 +29,7 @@ setup_logging()
 # Get environment settings
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 IS_PRODUCTION = ENVIRONMENT == "production"
+ENABLE_HEALTH_ENDPOINT = os.getenv("ENABLE_HEALTH_ENDPOINT", "true").lower() == "true"
 
 # Lifespan context manager
 @asynccontextmanager
