@@ -42,7 +42,6 @@ class LLMService:
         # Multiple free models - tested and reliable for 36 students
         self.models = [
             "mistralai/mistral-7b-instruct:free",
-            "meta-llama/llama-3.3-8b-instruct:free",
             "google/gemini-2.0-flash-exp:free",
             "deepseek/deepseek-r1-0528-qwen3-8b:free",
             "z-ai/glm-4.5-air:free",
@@ -241,10 +240,8 @@ class LLMService:
                         logging.warning("⚠️  FALLBACK: Using educational fallback after empty responses")
                         return self._get_fallback_response(emotion, user_message)
                         
-                elif response.status_code == 429:  # Rate limited - blacklist key and try next
-                    self._blacklist_key(current_api_key)  # Blacklist for 15 minutes
-                    logging.warning(f"🚫 RATE LIMITED: key ...{current_api_key[-6:]} blacklisted (attempt {attempt + 1}/{max_retries})")
-                    
+                elif response.status_code == 429:  # Rate limited - just try next key, no blacklisting
+                    logging.warning(f"🚫 RATE LIMITED: key ...{current_api_key[-6:]} (attempt {attempt + 1}/{max_retries})")
                     if attempt < max_retries - 1:
                         # Small delay before trying next key
                         await asyncio.sleep(random.uniform(0.1, 0.3))
