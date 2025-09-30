@@ -37,9 +37,7 @@ class LLMService:
         self.current_key_index = 0
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         
-        # API Key blacklisting for rate-limited keys (15 minutes)
-        self.blacklisted_keys = {}  # {key: blacklist_until_timestamp}
-        self.blacklist_duration = 15 * 60  # 15 minutes in seconds
+
         
         # Multiple free models - tested and reliable for 36 students
         self.models = [
@@ -57,65 +55,18 @@ class LLMService:
         
         logging.info(f"LLMService initialized with {len(self.api_keys)} API keys and {len(self.models)} models")
     
-    def _cleanup_blacklisted_keys(self):
-        """Remove keys from blacklist that have expired"""
-        current_time = time.time()
-        expired_keys = [key for key, blacklist_until in self.blacklisted_keys.items() 
-                       if current_time > blacklist_until]
-        
-        for key in expired_keys:
-            del self.blacklisted_keys[key]
-            logging.info(f"🔓 API key ending in ...{key[-6:]} removed from blacklist")
+
     
-    def _blacklist_key(self, api_key: str):
-        """Blacklist an API key for 15 minutes due to rate limiting"""
-        blacklist_until = time.time() + self.blacklist_duration
-        self.blacklisted_keys[api_key] = blacklist_until
-        
-        blacklist_until_str = datetime.fromtimestamp(blacklist_until).strftime("%H:%M:%S")
-        logging.warning(f"🚫 API key ending in ...{api_key[-6:]} blacklisted until {blacklist_until_str}")
+
     
-    def _is_key_blacklisted(self, api_key: str) -> bool:
-        """Check if an API key is currently blacklisted"""
-        if api_key not in self.blacklisted_keys:
-            return False
-        
-        if time.time() > self.blacklisted_keys[api_key]:
-            del self.blacklisted_keys[api_key]
-            return False
-        
-        return True
+
     
     def get_next_api_key(self):
-        """Get next API key in round-robin fashion, skipping blacklisted keys"""
+        """Get next API key in round-robin fashion, always rotating regardless of errors"""
         if not self.api_keys:
             raise Exception("No API keys available")
-        
-        # Clean up expired blacklisted keys
-        self._cleanup_blacklisted_keys()
-        
-        # Find a non-blacklisted key
-        attempts = 0
-        max_attempts = len(self.api_keys) * 2  # Try each key twice
-        
-        while attempts < max_attempts:
-            key = self.api_keys[self.current_key_index]
-            self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-            
-            if not self._is_key_blacklisted(key):
-                return key
-            
-            attempts += 1
-        
-        # If all keys are blacklisted, return the least recently blacklisted one
-        if self.blacklisted_keys:
-            least_recent_key = min(self.blacklisted_keys.keys(), 
-                                 key=lambda k: self.blacklisted_keys[k])
-            logging.warning(f"⚠️  All keys blacklisted, using least recent: ...{least_recent_key[-6:]}")
-            return least_recent_key
-        
-        # Fallback - return current key even if blacklisted
-        return self.api_keys[self.current_key_index]
+        key = self.api_keys[self.current_key_index]
+        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
         return key
     
     def get_educational_system_prompt(self, emotion: str, subject: Optional[str] = None) -> str:
