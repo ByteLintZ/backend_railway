@@ -84,8 +84,12 @@ async def send_message(conversation_id: str, request: Request, message: MessageR
                 detail=f"Daily prompt limit reached ({used}/3). Try again tomorrow to avoid additional charges."
             )
         conversation = conversation_service.get_conversation(conversation_id, user_id)
+        warning = None
         if not conversation:
-            raise HTTPException(status_code=404, detail="Conversation not found")
+            # Auto-create a new conversation and warn the user
+            conversation = conversation_service.create_conversation(user_id=user_id)
+            warning = f"Conversation not found. A new conversation was created (id: {conversation.id})."
+            conversation_id = conversation.id
         user_message = ChatMessage(
             content=message.content,
             sender="user"
@@ -185,9 +189,13 @@ async def send_message(conversation_id: str, request: Request, message: MessageR
                 system_load="normal" if total_time_ms < 5000 else "high",
                 top_emotions=f"{emotion}({confidence:.3f})" + (f", {list(all_probs.keys())[:2]}" if isinstance(all_probs, dict) and len(all_probs) > 1 else "")
             )
+            # If a warning was set, append it to the AI response
+            response_content = ai_content
+            if warning:
+                response_content = f"⚠️ {warning}\n\n" + ai_content
             return ChatResponse(
                 id=ai_message.id,
-                content=ai_content,
+                content=response_content,
                 emotion=emotion,
                 emotion_confidence=confidence,
                 timestamp=ai_message.timestamp
