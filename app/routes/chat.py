@@ -162,8 +162,8 @@ async def send_message(conversation_id: str, request: Request, message: MessageR
             # Calculate total processing time
             total_time_ms = (time.time() - total_start_time) * 1000
             # Get system status for logging
-            available_keys = len([k for k in llm_service.api_keys if not llm_service._is_key_blacklisted(k)])
-            blacklisted_keys = len(llm_service.blacklisted_keys)
+            available_keys = len(llm_service.api_keys)
+            blacklisted_keys = 0
             # Enhanced comprehensive logging
             save_chat_log(
                 student_message=message.content,
@@ -237,23 +237,14 @@ async def get_keys_status():
         remaining_seconds = max(0, blacklist_until - time.time())
         remaining_minutes = int(remaining_seconds / 60)
         
-        blacklisted_info.append({
-            "key_ending": f"...{key[-6:]}",
-            "blacklisted_until": datetime.fromtimestamp(blacklist_until).strftime("%H:%M:%S"),
-            "remaining_minutes": remaining_minutes
-        })
-    
-    available_keys = []
-    for key in llm_service.api_keys:
-        if not llm_service._is_key_blacklisted(key):
-            available_keys.append(f"...{key[-6:]}")
-    
+    # Blacklisting removed: all keys are always available
+    available_keys = [f"...{key[-6:]}" for key in llm_service.api_keys]
     return {
         "total_keys": len(llm_service.api_keys),
         "available_keys": len(available_keys),
-        "blacklisted_keys": len(blacklisted_info),
-        "blacklist_duration_minutes": 15,
+        "blacklisted_keys": 0,
+        "blacklist_duration_minutes": 0,
         "available_key_endings": available_keys,
-        "blacklisted_key_info": blacklisted_info,
+        "blacklisted_key_info": [],
         "current_models": llm_service.models
     }
