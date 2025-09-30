@@ -15,17 +15,17 @@ class LLMService:
     def __init__(self):
         # Multiple API keys for 36 students emergency solution
         self.api_keys = [
-            os.getenv("OPENROUTER_API_KEY_1", ""),
-            os.getenv("OPENROUTER_API_KEY_2", ""),
-            os.getenv("OPENROUTER_API_KEY_3", ""),
-            os.getenv("OPENROUTER_API_KEY_4", ""),
-            os.getenv("OPENROUTER_API_KEY_5", ""),
-            os.getenv("OPENROUTER_API_KEY_6", "")
+            os.getenv("OPENROUTER_API_KEY_1", "").strip(),
+            os.getenv("OPENROUTER_API_KEY_2", "").strip(),
+            os.getenv("OPENROUTER_API_KEY_3", "").strip(),
+            os.getenv("OPENROUTER_API_KEY_4", "").strip(),
+            os.getenv("OPENROUTER_API_KEY_5", "").strip(),
+            os.getenv("OPENROUTER_API_KEY_6", "").strip()
         ]
         # Remove empty keys and fallback to main key if needed
         self.api_keys = [k for k in self.api_keys if k]
         if not self.api_keys:
-            fallback_key = os.getenv("OPENROUTER_API_KEY", "")
+            fallback_key = os.getenv("OPENROUTER_API_KEY", "").strip()
             if fallback_key:
                 self.api_keys = [fallback_key]
         

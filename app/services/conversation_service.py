@@ -75,6 +75,7 @@ class ConversationService:
         """Get a specific conversation by ID for a user"""
         file_path = self._get_conversation_file(conversation_id, user_id)
         if not os.path.exists(file_path):
+            print(f"[ConversationService] Conversation file not found: {file_path} (conversation_id={conversation_id}, user_id={user_id})")
             return None
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -85,7 +86,7 @@ class ConversationService:
                     message['timestamp'] = datetime.fromisoformat(message['timestamp'])
                 return Conversation(**data)
         except Exception as e:
-            print(f"Error loading conversation {conversation_id} for user {user_id}: {e}")
+            print(f"[ConversationService] Error loading conversation {conversation_id} for user {user_id}: {e}")
             return None
 
     def get_all_conversations(self, user_id: str) -> List[ConversationSummary]:
